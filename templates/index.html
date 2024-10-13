@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WexAI ile proje entegresi">
+    <link href="https://fonts.cdnfonts.com/css/google-sans" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/helvetica-neue-55" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://i.hizliresim.com/dgaicqp.png">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+    <div class="sidenav">
+        <div class="yenisohbet">
+            <span class="material-symbols-outlined ekle">
+                add
+                <span class="sohbet-content">Yeni Sohbet</span>
+            </span>
+        </div>
+        <div class="son-sohbetler">
+            <h6 class="sonsohbet">En son</h6>
+            <span id="chat" class="material-symbols-outlined messages">
+                chat_bubble <b> </b> <span class="son-message">WexAI Kurucusu Kimdir ?</span>
+            </span>
+        </div>
+        <div class="sidenav-secenekler">
+            <button class="sidenav-butonu ayar-on-pencere">
+                <span class="material-symbols-outlined sidenav-ikonu">settings</span>
+                <span class="sidenav-yazisi">Ayarlar</span>
+            </button>
+            <button class="sidenav-butonu" onclick="window.location.href='https://wa.link/cwd42y';">
+                <span class="material-symbols-outlined sidenav-ikonu">help</span>
+                <span class="sidenav-yazisi">Yardım</span>
+            </button>
+            <button class="sidenav-butonu">
+                <span class="material-symbols-outlined sidenav-ikonu">prompt_suggestion</span>
+                <span class="sidenav-yazisi">Geri Dön</span>
+            </button>
+        </div>
+        <div id="ayarlarMenu" class="dropdown-menu" style="display: none;">
+            <a class="dropdown-item" href="#">Seçenek 1</a>
+            <a class="dropdown-item" href="#">Seçenek 2</a>
+            <a class="dropdown-item" href="#">Seçenek 3</a>
+        </div>
+        <div class="lokasyon">
+            <button id="lokasyon" class="sidenav-butonu">
+                <span class="sidenav-ikonu material-symbols-outlined">location_on</span>
+                <div class="sidenav-bilgiler">
+                    <div id="konumBilgisi" class="sidenav-yazisi">Konum Bilgisi Çekiliyor...</div>
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="sidekapali">
+        <div class="navbar">
+            <span class="material-symbols-outlined menu" id="menuButton">
+                menu
+            </span>
+            <span class="logo-wexai wexrainbow" style="animation: rainbow 1.8s linear 1;">WexAI</span>
+            <span class="profil">
+                <img src="https://i.hizliresim.com/o1ca7zz.png" alt="" draggable="false">
+            </span>
+        </div>
+        <div class="wexbody">
+            <div class="hosgeldin">
+                <div class="wexmidedibiri">
+                    <h1 class="sagakaydır">
+                        <span class="wexrainbow">Merhaba Wexbie,</span>
+                        <br>
+                        <span class="wexsorusor">Bugün nasıl yardımcı olabilirim?</span>
+                    </h1>
+                    <div class="prompt-container">
+                        <div class="prompt-kutu" onclick="sendPromptMessage('Wexbie Kimdir?')">
+                            <h5>Wexbie Kimdir?</h5>
+                        </div>
+                        <div class="prompt-kutu" onclick="sendPromptMessage('Trigonemetri Tarihi')">
+                            <h5>Trigonemetri Tarihi</h5>
+                        </div>
+                        <div class="prompt-kutu" onclick="sendPromptMessage('Türev')">
+                            <h5>Türev</h5>
+                        </div>
+                        <div class="prompt-kutu" onclick="sendPromptMessage('11.Sınıf Matematik')">
+                            <h5>11.Sınıf Matematik</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-container">
+                <div id="chat-box" class="chat-box">
+                    <!-- Mesajlar burada görüntülenecek -->
+                </div>
+                <div class="yazcontain">
+                    <div class="inputcevre">
+                        <input type="text" id="mesaj" placeholder="Mesajınızı buraya yazın">
+                        <label for="file-upload" class="material-symbols-outlined add-resim">add_photo_alternate</label>
+                        <input id="file-upload" type="file" name="Filedata" accept=".jpg,.jpeg,.png,.webp"
+                            style="display: none;">
+                        <span class="material-symbols-outlined mikrofon" id="mikrofon">mic</span>
+                        <audio id="audio-element" style="display: none;"></audio>
+                        <button id="gonder" class="material-symbols-outlined gonder gonder-hidden">send</button>
+                    </div>
+                </div>
+                <div class="gizlilikvehaklar">
+                    <p>Wexbie, doğruluğu garanti etmez, bu nedenle verilen bilgileri doğrulamanız önemlidir. Kişisel
+                        gizliliğiniz
+                        bizim
+                        için önceliktir.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Ses tanıma için gerekli değişkenleri tanımlayın
+            const mikrofon = document.getElementById("mikrofon");
+            const mesajInput = document.getElementById("mesaj");
+            let sesTanici;
+
+            // Tarayıcı desteğini kontrol edin
+            if ('webkitSpeechRecognition' in window) {
+                sesTanici = new webkitSpeechRecognition();
+                sesTanici.continuous = true; // Sürekli dinleme açık
+                sesTanici.interimResults = false; // Geçici sonuçları göstermeme
+                sesTanici.lang = 'tr-TR'; // Türkçe dil ayarı
+
+                // Ses algılandığında
+                sesTanici.onresult = function (event) {
+                    const sesSonucu = event.results[event.resultIndex][0].transcript; // Algılanan kelimeleri al
+                    mesajInput.value = sesSonucu; // Input'a yazdır
+                    console.log('Algılanan ses:', sesSonucu);
+
+                    // Mesajı gönder
+                    sendMessage(sesSonucu); // Algılanan kelimeyi gönder
+
+                    // 'hosgeldin' sınıfını gizle
+                    $('.hosgeldin').hide();
+                };
+
+                // Hata durumunda
+                sesTanici.onerror = function (event) {
+                    console.error('Ses tanıma hatası:', event.error);
+                    sesTanici.stop(); // Hata durumunda durdur
+                    sesTanici.start(); // Yeniden başlat
+                };
+
+                // Mikrofon simgesine tıklama olayını dinleyin
+                mikrofon.addEventListener("click", function () {
+                    // Ses tanımayı başlat
+                    sesTanici.start();
+                    console.log('Ses tanıma başlatıldı.');
+
+                    // Sesin kendisini duymamak için audio elementini devre dışı bırak
+                    const audioElement = document.getElementById("audio-element");
+                    audioElement.muted = true; // Mikrofon sesi duymamak için sesi kapat
+                });
+
+            } else {
+                console.log("Bu tarayıcı ses tanıma desteklemiyor.");
+            }
+
+            // Mesaj gönderme işlevi
+            function sendMessage(message) {
+                // Mesajı kullanıcı olarak ekle
+                appendMessage('user', message);
+
+                // AJAX isteği ile Flask backend'e gönder
+                $.ajax({
+                    url: '/chat',
+                    type: 'POST',
+                    data: { 'user_input': message },
+                    success: function (data) {
+                        console.log("Başarılı yanıt:", data);
+                        appendMessage('bot', data.response);
+
+                        // Botun yanıtı alındıktan sonra input'u temizle
+                        $('#mesaj').val(''); // Input alanını temizle
+
+                        // Ses tanımayı yeniden başlat
+                        // Bu kısım artık gerek kalmadı çünkü sürekli dinleme açık
+                        // sesTanici.start(); // Yeniden ses tanıma başlat
+                    },
+                    error: function (xhr) {
+                        console.error("Hata yanıtı:", xhr);
+                        appendMessage('bot', 'Bir hata oluştu: ' + (xhr.responseJSON ? xhr.responseJSON.response : 'Bilinmeyen hata'));
+                    }
+                });
+            }
+
+            function appendMessage(sender, message) {
+                let messageElement = $('<div>').addClass('message ' + sender);
+                messageElement.text(message);
+                $('#chat-box').append(messageElement);
+
+                // En son mesaja kaydır
+                $('#chat-box').scrollTop($('#chat-box')[0].scrollHeight);
+
+                // Fade animasyonu için
+                setTimeout(() => {
+                    messageElement.addClass('visible'); // Görünür hale getir
+                }, 100); // Kısa bir gecikme ile görünür yap
+            }
+
+            // Gönder butonuna tıklama olayı
+            $('#gonder').click(function () {
+                let mesaj = $('#mesaj').val().trim();
+                if (mesaj !== "") {
+                    sendMessage(mesaj);
+                    $('#mesaj').val(''); // Mesaj gönderildikten sonra input'u temizle
+                    $('.hosgeldin').hide(); // hosgeldin sınıfını gizle
+                }
+            });
+
+            // Enter tuşuna basma olayı
+            $('#mesaj').keydown(function (e) {
+                if (e.key === 'Enter') { // Enter tuşu
+                    $('#gonder').click();
+                }
+            });
+
+            // Mesaj seçeneklerine tıklama olayı
+            $('.prompt-kutu').click(function () {
+                let selectedMessage = $(this).find('h5').text(); // Seçilen mesaj
+                sendMessage(selectedMessage); // Mesajı gönder
+                $('.hosgeldin').hide(); // hosgeldin sınıfını gizle
+            });
+        });
+
+        document.getElementById("gonder").addEventListener("click", function () { var m = document.getElementById("mesaj").value; if (m.trim() !== "") { var c = document.createElement("div"); c.textContent = m; document.querySelector(".kullanici-container").appendChild(c); document.getElementById("mesaj").value = ""; } }); var i = document.getElementById("mesaj"); var g = document.getElementById("gonder"); i.addEventListener("input", function () { if (i.value.trim() !== "") { g.classList.remove("gonder-hidden"); g.classList.add("gonder-visible"); } else { g.classList.remove("gonder-visible"); g.classList.add("gonder-hidden"); } }); i.addEventListener("keyup", function () { if (i.value.trim() === "") { g.classList.remove("gonder-visible"); g.classList.add("gonder-hidden"); } }); document.querySelector(".mikrofon").addEventListener("click", function () { navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) { var a = document.createElement("audio"); a.srcObject = s; a.play(); }).catch(function (e) { console.error('Mikrofon erişimi alınamadı: ' + e); }); }); fetch('https://ipinfo.io/json').then(r => r.json()).then(d => { var il = d.city; var ulke = d.country; var k = il + ', ' + ulke; document.getElementById("konumBilgisi").textContent = k; }).catch(e => { console.error('Hata:', e); document.getElementById("konumBilgisi").textContent = "Konum bilgisi alınamadı."; }); document.getElementById("mesaj").addEventListener("input", function () { if (this.value.trim() !== "") { document.getElementById("gonder").style.left = "20"; document.getElementById("gonder").style.display = "inline-block"; } else { document.getElementById("gonder").style.left = "-100px"; } }); document.addEventListener("DOMContentLoaded", function () { function sendMessage() { var h = document.querySelector('.hosgeldin'); if (h) { h.style.display = 'none'; } } document.getElementById("gonder").addEventListener("click", sendMessage); }); document.body.style.userSelect = 'none'; document.addEventListener('DOMContentLoaded', function () { const i = document.querySelector('.inputcevre input[type="text"]'); const ic = document.querySelector('.inputcevre'); i.addEventListener('focus', function () { ic.style.backgroundColor = '#282a2c'; }); i.addEventListener('blur', function () { ic.style.backgroundColor = '#1e1f20'; }); }); var m = document.querySelector(".menu"); var s = document.querySelector(".sidenav"); var o = false; m.addEventListener("click", function () { if (o) { closeNav(); } else { openNav(); } o = !o; }); function openNav() { s.classList.remove("sidenav-closed"); s.classList.add("sidenav-open"); } function closeNav() { s.classList.remove("sidenav-open"); s.classList.add("sidenav-closed"); }
+
+
+    </script>
+
+</body>
+
+</html>

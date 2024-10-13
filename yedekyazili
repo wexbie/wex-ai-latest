@@ -1,0 +1,27 @@
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+API = os.getenv("API_KEY")
+genai.configure(api_key=API)
+model = genai.GenerativeModel("gemini-1.5-flash")
+
+isExit = False
+
+while not isExit:
+    try:
+        # Kullanıcıdan metin girişi al
+        text = input("Siz: ")
+
+        if text.lower() == "çıkış":
+            isExit = True
+            print("Çıkış Yapıldı...")
+            break
+        else:
+            # model ile yanıt oluşturma
+            response = model.generate_content(text)
+            print(f"Cevap: {response.text}")
+
+    except Exception as e:
+        print(f"Bir hata oluştu: {e}")
